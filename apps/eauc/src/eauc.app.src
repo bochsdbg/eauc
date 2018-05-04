@@ -2,6 +2,6 @@
   [{description, "EAuc Application"},
    {vsn, "0.9"},
    {registered, []},
-   {applications, [kernel, stdlib, n2o]},
+   {applications, [kernel, stdlib, n2o, epgsql_pool]},
    {mod, { eauc, []}},
    {env, []} ]}.

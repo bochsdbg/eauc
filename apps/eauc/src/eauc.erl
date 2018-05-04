@@ -1,10 +1,12 @@
 -module(eauc).
 -behaviour(supervisor).
 -behaviour(application).
--export([init/1, start/2, stop/1, main/1]).
+-export([init/1, start/2, start/0, stop/1, main/1]).
 
 main(A)    -> mad:main(A).
-start()    -> start(normal,[]).
+start()    ->
+  application:ensure_all_started(eauc).
+
 start(_,_) ->
   application:start(ssl),
   supervisor:start_link({local,eauc},eauc,[]).
@@ -12,13 +14,23 @@ start(_,_) ->
 stop(_)    -> ok.
 
 init([])   ->
+  Params = #{
+    host => "localhost",
+    port => 5432,
+    username => "postgres",
+    password => "",
+    database => "eauc"
+  },
+
+  case epgsql_pool:start(my_main_pool, 50, 100, Params) of
+    {ok, _} ->
+      io:format("~p~n",["pg_pool start !!"]);
+    Z ->
+      io:format("Pool start err: ~p~n~p~n", ["err db connect", Z])
+  end,
+
   {ok, {{one_for_one, 5, 10},
         [spec(),
-         #{id => pg_pool_1,
-           start => {pg, start_link, []},
-           restart => permanent,
-           type => worker,
-           modules => [pg] },
          #{id => lot_worker_1,
            start => {worker_inactive_lot, start_link, []},
            restart => permanent,
